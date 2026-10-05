@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Morning Market Cards — Monday, October 5, 2026</title>
+<style>
+  :root{
+    --bg:#f3f4f6; --surface:#ffffff; --ink:#111827; --ink-2:#4b5563; --ink-3:#6b7280;
+    --line:#e5e7eb; --track:#e5e7eb; --control-bg:#e5e7eb;
+    --up:#16a34a; --dn:#dc2626; --shadow:0 1px 3px rgba(17,24,39,.08);
+    --head-bg:#111827; --head-ink:#ffffff; --head-sub:#9ca3af;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0b0f14; --surface:#151b23; --ink:#f3f4f6; --ink-2:#cbd5e1; --ink-3:#94a3b8;
+      --line:#26303c; --track:#26303c; --control-bg:#1f2937;
+      --up:#4ade80; --dn:#f87171; --shadow:0 1px 3px rgba(0,0,0,.4);
+      --head-bg:#030712; --head-ink:#f9fafb; --head-sub:#9ca3af;
+    }
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--ink);
+    padding:16px; max-width:1200px; margin:0 auto;
+    -webkit-text-size-adjust:100%;
+  }
+  header.top{
+    background:var(--head-bg); color:var(--head-ink);
+    border-radius:10px; padding:20px 22px; margin-bottom:14px;
+  }
+  header.top h1{font-size:22px; letter-spacing:-.01em; margin-bottom:4px}
+  header.top p{color:var(--head-sub); font-size:13px; line-height:1.5}
+  .legend{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:12px; font-size:12.5px; color:var(--head-ink)}
+  .legend .item{display:inline-flex; align-items:center; gap:6px}
+  .legend .dot{width:11px; height:11px; border-radius:50%; display:inline-block; flex:none}
+  .controls{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:16px}
+  .seg{display:flex; background:var(--control-bg); border-radius:999px; padding:3px}
+  .seg button{
+    border:0; background:transparent; padding:8px 18px; border-radius:999px;
+    font-size:14px; cursor:pointer; color:var(--ink-2); font-family:inherit;
+  }
+  .seg button.active{background:var(--head-bg); color:#fff; font-weight:600}
+  .seg button:focus-visible, .search:focus-visible{outline:2px solid #2563eb; outline-offset:2px}
+  .search{
+    margin-left:auto; padding:9px 14px; border:1px solid var(--line);
+    border-radius:999px; font-size:14px; width:230px; max-width:100%;
+    background:var(--surface); color:var(--ink); font-family:inherit;
+  }
+  .search::placeholder{color:var(--ink-3)}
+  section.group{margin-bottom:22px}
+  section.group > h2{
+    font-size:14px; text-transform:uppercase; letter-spacing:.06em;
+    margin-bottom:10px; display:flex; align-items:center; gap:8px; color:var(--ink);
+  }
+  .dot{width:11px; height:11px; border-radius:50%; display:inline-block; flex:none}
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:12px}
+  .card{
+    background:var(--surface); border-radius:10px; padding:16px;
+    border-left:5px solid #9ca3af; box-shadow:var(--shadow);
+  }
+  .row1{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:2px}
+  .sym{font-size:17px; font-weight:700}
+  .lbl{font-size:12px; color:var(--ink-3); margin-left:6px}
+  .pricewrap{text-align:right; white-space:nowrap}
+  .price{font-size:17px; font-weight:700}
+  .chg{font-size:13px; font-weight:600; margin-left:6px}
+  .up{color:var(--up)} .dn{color:var(--dn)}
+  .pill{
+    display:inline-block; font-size:12px; font-weight:700; color:#fff;
+    border-radius:999px; padding:3px 10px; margin:8px 0;
+  }
+  .scores{display:flex; gap:14px; font-size:13px; margin-bottom:8px; color:var(--ink-2); flex-wrap:wrap}
+  .scores b{font-size:14px; color:var(--ink)}
+  .ev{font-size:13px; color:var(--ink-2); margin-bottom:8px; line-height:1.45}
+  .sup{font-size:12.5px; color:var(--ink-2); margin-bottom:4px; line-height:1.4}
+  .sup b{color:var(--ink)}
+  .meta{font-size:12.5px; color:var(--ink-2); margin-top:6px; line-height:1.5}
+  .meta .k{color:var(--ink-3)}
+  footer{color:var(--ink-3); font-size:12px; text-align:center; margin:18px 0 8px; line-height:1.5}
+  .empty{color:var(--ink-3); font-size:14px; padding:24px; text-align:center}
+  @media (max-width:480px){
+    body{padding:12px}
+    .cards{grid-template-columns:1fr}
+    .search{width:100%; margin-left:0}
+    header.top h1{font-size:20px}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>TOTAL CRYPTO leads trend strength while NFLX is under the most pressure.</h1>
+  <p>Mon Oct 5, 2026, 7:57 AM ET (premarket)</p>
+  <p>Equities are Friday's closes (premarket Monday); crypto is live (24h basis); GLD data is the Friday 10/02/2026 close.</p>
+  <div class="legend" aria-label="Stage color legend">
+    <span class="item"><span class="dot" style="background:#64748b"></span>Stage 1 &middot; Basing</span>
+    <span class="item"><span class="dot" style="background:#16a34a"></span>Stage 2 &middot; Advancing</span>
+    <span class="item"><span class="dot" style="background:#d97706"></span>Stage 3 &middot; Topping</span>
+    <span class="item"><span class="dot" style="background:#dc2626"></span>Stage 4 &middot; Declining</span>
+  </div>
+</header>
+<div class="controls">
+  <div class="seg" role="group" aria-label="Group cards by">
+    <button id="btnStage" type="button" class="active" aria-pressed="true">Stage</button>
+    <button id="btnCat" type="button" aria-pressed="false">Category</button>
+  </div>
+  <input id="q" class="search" type="text" inputmode="search" placeholder="Filter by symbol or name&hellip;" aria-label="Filter by symbol or name" />
+</div>
+<div id="board"></div>
+<footer>Snapshot #28 &middot; Data as of Mon Oct 5, 2026, 7:57 AM ET (premarket) &middot; Equities are Friday&#x27;s closes (premarket Monday); crypto is live (24h basis); GLD data is the Friday 10/02/2026 close.</footer>
+<script>
+var CARDS = [{"symbol":"SPY","label":"S&P 500 ETF","category":"Market","priceDisplay":"$769.64","changePercent":0.7395,"dailyScore":7,"weeklyScore":8,"monthlyScore":10,"stage":"Stage 2","stageEvidence":"Price is above a rising 30-week trend and within 1% of its 52-week high; nearest support is 6/10, 2.0% below.","supports":[{"level":"$754.05","rating":6},{"level":"$729.46","rating":7},{"level":"$631.97","rating":8}],"buyZone":"Near $754.05 on a controlled pullback","invalidation":"Daily close below $754.05","catalyst":"Watch $773.50 for a 20-session breakout; $754.05 is the nearest closing support.","price":769.64,"pullbackStatus":"No active pullback","riskDial":"Focus"},{"symbol":"QQQ","label":"Nasdaq 100 ETF","category":"Market","priceDisplay":"$749.58","changePercent":1.0175,"dailyScore":8,"weeklyScore":9,"monthlyScore":10,"stage":"Stage 2","stageEvidence":"Price is above a rising 30-week trend and within 0% of its 52-week high; nearest support is 6/10, 6.0% below.","supports":[{"level":"$704.54","rating":6},{"level":"$661.73","rating":7},{"level":"$558.28","rating":8}],"buyZone":"Near $704.54 on a controlled pullback","invalidation":"Daily close below $704.54","catalyst":"Watch $749.58 for a 20-session breakout; $704.54 is the nearest closing support.","price":749.58,"pullbackStatus":"No active pullback","riskDial":"Focus"},{"symbol":"IWM","label":"Russell 2000 ETF","category":"Market","priceDisplay":"$281.52","changePercent":0.896,"dailyScore":4,"weeklyScore":1,"monthlyScore":4,"stage":"Stage 2","stageEvidence":"Price is holding above a rising 30-week trend despite a 8% pullback; nearest support is 6/10, 1.3% below.","supports":[{"level":"$277.89","rating":6},{"level":"$239.61","rating":8},{"level":"$229.11","rating":8}],"buyZone":"Near $277.89 on a controlled pullback","invalidation":"Daily close below $277.89","catalyst":"Watch $296.01 for a 20-session breakout; $277.89 is the nearest closing support.","price":281.52,"pullbackStatus":"Reversal warning","riskDial":"Caution"},{"symbol":"TLT","label":"20+ Year Treasuries","category":"Market","priceDisplay":"$77.48","changePercent":-0.296,"dailyScore":1,"weeklyScore":1,"monthlyScore":1,"stage":"Stage 4","stageEvidence":"Price is 8.3% below a falling 30-week trend; 3-month momentum is negative; nearest support is 6/10, 0.0% below.","supports":[{"level":"$77.48","rating":6}],"buyZone":"Near $77.48 on a controlled pullback","invalidation":"Daily close below $77.48","catalyst":"Watch $82.21 for a 20-session breakout; $77.48 is the nearest closing support.","price":77.48,"pullbackStatus":"Reversal warning","riskDial":"Ignore"},{"symbol":"TOTAL CRYPTO","label":"Total crypto market cap","category":"Crypto","priceDisplay":"$2.91T","changePercent":-1.945226460003191,"dailyScore":10,"weeklyScore":10,"monthlyScore":10,"stage":"Stage 2","stageEvidence":"BTC + ETH market-cap proxy: Price is above a rising 30-week trend and within 8% of its 52-week high.","supports":[],"buyZone":null,"invalidation":null,"catalyst":"Watch whether total crypto capitalization holds its 24-hour direction into the U.S. session.","price":2.91216731789377,"priceUnit":"usd_trillion","pullbackStatus":"No active pullback","riskDial":"Focus"},{"symbol":"BTC","label":"Bitcoin","category":"Crypto","priceDisplay":"$86,045","changePercent":0.8890245951735608,"dailyScore":10,"weeklyScore":10,"monthlyScore":10,"stage":"Stage 2","stageEvidence":"Price is above a rising 30-week trend and within 7% of its 52-week high.","supports":[{"level":"$76,147","rating":6},{"level":"$62,844","rating":7},{"level":"$58,566","rating":8}],"buyZone":"Near $76,147 on a controlled pullback","invalidation":"Daily close below $76,147","catalyst":"Watch $86,597 for a 20-session breakout; $76,147 is the nearest closing support.","price":86045,"pullbackStatus":"No active pullback","riskDial":"Focus"},{"symbol":"ETH","label":"Ethereum","category":"Crypto","priceDisplay":"$2,715.01","changePercent":0.5527962571524073,"dailyScore":9,"weeklyScore":10,"monthlyScore":10,"stage":"Stage 2","stageEvidence":"Price is above a rising 30-week trend and within 15% of its 52-week high.","supports":[{"level":"$2,416","rating":6},{"level":"$1,871","rating":7},{"level":"$1,566","rating":8}],"buyZone":"Near $2,416 on a controlled pullback","invalidation":"Daily close below $2,416","catalyst":"Watch $2,775 for a 20-session breakout; $2,416 is the nearest closing support.","price":2715.01,"pullbackStatus":"Healthy pullback","riskDial":"Focus"},{"symbol":"AAPL","label":"Apple","category":"Mag 7","priceDisplay":"$333.69","changePercent":1.0202,"dailyScore":7,"weeklyScore":8,"monthlyScore":10,"stage":"Stage 2","stageEvidence":"Price is above a rising 30-week trend and within 2% of its 52-week high; nearest support is 6/10, 5.5% below.","supports":[{"level":"$315.34","rating":6},{"level":"$302.25","rating":7},{"level":"$246.63","rating":8}],"buyZone":"Near $315.34 on a controlled pullback","invalidation":"Daily close below $315.34","catalyst":"Watch $341.07 for a 20-session breakout; $315.34 is the nearest closing support.","price":333.69,"pullbackStatus":"Healthy pullback","riskDial":"Focus"},{"symbol":"MSFT","label":"Microsoft","category":"Mag 7","priceDisplay":"$517.53","changePercent":0.9224,"dailyScore":8,"weeklyScore":9,"monthlyScore":10,"stage":"Stage 2","stageEvidence":"Price is above a rising 30-week trend and within 5% of its 52-week high; nearest support is 6/10, 5.3% below.","supports":[{"level":"$490.30","rating":6},{"level":"$381.58","rating":7},{"level":"$352.83","rating":8}],"buyZone":"Near $490.30 on a controlled pullback","invalidation":"Daily close below $490.30","catalyst":"Watch $517.53 for a 20-session breakout; $490.30 is the nearest closing support.","price":517.53,"pullbackStatus":"No active pullback","riskDial":"Focus"},{"symbol":"NVDA","label":"Nvidia","category":"Mag 7","priceDisplay":"$233.95","changePercent":1.3385,"dailyScore":9,"weeklyScore":10,"monthlyScore":10,"stage":"Stage 2","stageEvidence":"Price is above a rising 30-week trend and within 1% of its 52-week high.","supports":[{"level":"$210.96","rating":6},{"level":"$190.01","rating":7},{"level":"$165.17","rating":8}],"buyZone":"Near $210.96 on a controlled pullback","invalidation":"Daily close below $210.96","catalyst":"Watch $233.95 for a 20-session breakout; $210.96 is the nearest closing support.","price":233.95,"pullbackStatus":"No active pullback","riskDial":"Focus"},{"symbol":"GOOGL","label":"Alphabet","category":"Mag 7","priceDisplay":"$343.50","changePercent":1.5551,"dailyScore":7,"weeklyScore":4,"monthlyScore":4,"stage":"Stage 2 \u2192 3","stageEvidence":"15% below the 52-week high with a lower high near the 30-week trend; nearest support is 6/10, 3.7% below.","supports":[{"level":"$330.65","rating":6},{"level":"$317.69","rating":7},{"level":"$273.50","rating":8}],"buyZone":"Near $330.65 on a controlled pullback","invalidation":"Daily close below $330.65","catalyst":"Watch $354.97 for a 20-session breakout; $330.65 is the nearest closing support.","price":343.5,"pullbackStatus":"Reversal warning","riskDial":"Caution"},{"symbol":"AMZN","label":"Amazon","category":"Mag 7","priceDisplay":"$251.52","changePercent":1.3254,"dailyScore":4,"weeklyScore":3,"monthlyScore":7,"stage":"Stage 2 \u2192 3","stageEvidence":"11% below the 52-week high with weak one-month momentum near the 30-week trend; nearest support is 6/10, 2.2% below.","supports":[{"level":"$245.96","rating":6},{"level":"$226.65","rating":7},{"level":"$200.95","rating":8}],"buyZone":"Near $245.96 on a controlled pullback","invalidation":"Daily close below $245.96","catalyst":"Watch $258.51 for a 20-session breakout; $245.96 is the nearest closing support.","price":251.52,"pullbackStatus":"Reversal warning","riskDial":"Caution"},{"symbol":"META","label":"Meta","category":"Mag 7","priceDisplay":"$728.08","changePercent":0.2962,"dailyScore":8,"weeklyScore":10,"monthlyScore":10,"stage":"Stage 1 \u2192 2","stageEvidence":"Price is emerging above the 30-week trend with improving one-month momentum.","supports":[{"level":"$613.48","rating":6},{"level":"$539.03","rating":7},{"level":"$525.72","rating":8}],"buyZone":"Near $613.48 on a controlled pullback","invalidation":"Daily close below $613.48","catalyst":"Watch $777.59 for a 20-session breakout; $613.48 is the nearest closing support.","price":728.08,"pullbackStatus":"Reversal warning","riskDial":"Caution"},{"symbol":"TSLA","label":"Tesla","category":"Mag 7","priceDisplay":"$370.59","changePercent":4.6539,"dailyScore":6,"weeklyScore":5,"monthlyScore":2,"stage":"Stage 4","stageEvidence":"Price is 2.2% below a falling 30-week trend; 3-month momentum is negative; nearest support is 6/10, 4.8% below.","supports":[{"level":"$352.84","rating":6},{"level":"$298.32","rating":7}],"buyZone":"Near $352.84 on a controlled pullback","invalidation":"Daily close below $352.84","catalyst":"Watch $380.12 for a 20-session breakout; $352.84 is the nearest closing support.","price":370.59,"pullbackStatus":"Healthy pullback","riskDial":"Caution"},{"symbol":"ADBE","label":"Adobe","category":"Growth","priceDisplay":"$237.69","changePercent":-1.4879,"dailyScore":3,"weeklyScore":4,"monthlyScore":2,"stage":"Stage 4","stageEvidence":"35% below the 52-week high and 3.2% below the 30-week trend; the mature decline overrides the transition band; nearest support is 6/10, 2.8% below.","supports":[{"level":"$231.01","rating":6},{"level":"$212.17","rating":7},{"level":"$193.41","rating":8}],"buyZone":"Near $231.01 on a controlled pullback","invalidation":"Daily close below $231.01","catalyst":"Watch $266.51 for a 20-session breakout; $231.01 is the nearest closing support.","price":237.69,"pullbackStatus":"Reversal warning","riskDial":"Ignore"},{"symbol":"UBER","label":"Uber","category":"Growth","priceDisplay":"$68.11","changePercent":0.3388,"dailyScore":1,"weeklyScore":1,"monthlyScore":1,"stage":"Stage 4","stageEvidence":"32% below the 52-week high and 7.0% below the 30-week trend; the mature decline overrides the transition band; nearest support is 6/10, 0.3% below.","supports":[{"level":"$67.88","rating":6},{"level":"$65.94","rating":7}],"buyZone":"Near $67.88 on a controlled pullback","invalidation":"Daily close below $67.88","catalyst":"Watch $75.76 for a 20-session breakout; $67.88 is the nearest closing support.","price":68.11,"pullbackStatus":"Reversal warning","riskDial":"Ignore"},{"symbol":"NFLX","label":"Netflix","category":"Growth","priceDisplay":"$67.06","changePercent":-1.1643,"dailyScore":1,"weeklyScore":1,"monthlyScore":1,"stage":"Stage 4","stageEvidence":"46% below the 52-week high and 19.5% below the 30-week trend; the mature decline overrides the transition band; nearest support is 6/10, 0.0% below.","supports":[{"level":"$67.06","rating":6}],"buyZone":"Near $67.06 on a controlled pullback","invalidation":"Daily close below $67.06","catalyst":"Watch $80.32 for a 20-session breakout; $67.06 is the nearest closing support.","price":67.06,"pullbackStatus":"Reversal warning","riskDial":"Ignore"},{"symbol":"COIN","label":"Coinbase","category":"Growth","priceDisplay":"$183.00","changePercent":-3.3229,"dailyScore":1,"weeklyScore":6,"monthlyScore":9,"stage":"Stage 2 \u2192 3","stageEvidence":"53% below the 52-week high as momentum softens near the 30-week trend.","supports":[{"level":"$164.51","rating":6},{"level":"$145.41","rating":7},{"level":"$142.52","rating":8}],"buyZone":"Near $164.51 on a controlled pullback","invalidation":"Daily close below $164.51","catalyst":"Watch $201.07 for a 20-session breakout; $164.51 is the nearest closing support.","price":183,"pullbackStatus":"Healthy pullback","riskDial":"Ignore"},{"symbol":"HOOD","label":"Robinhood","category":"Growth","priceDisplay":"$112.74","changePercent":1.4305,"dailyScore":1,"weeklyScore":3,"monthlyScore":8,"stage":"Stage 2 \u2192 3","stageEvidence":"26% below the 52-week high as momentum softens near the 30-week trend; nearest support is 6/10, 7.4% below.","supports":[{"level":"$104.42","rating":6},{"level":"$86.56","rating":7},{"level":"$65.16","rating":8}],"buyZone":"Near $104.42 on a controlled pullback","invalidation":"Daily close below $104.42","catalyst":"Watch $124.25 for a 20-session breakout; $104.42 is the nearest closing support.","price":112.74,"pullbackStatus":"Healthy pullback","riskDial":"Focus"},{"symbol":"GLD","label":"SPDR Gold Shares","category":"Metals","priceDisplay":"$380.14","changePercent":-0.6845020378304922,"dailyScore":1,"weeklyScore":2,"monthlyScore":1,"stage":"Stage 3 \u2192 4","stageEvidence":"Price broke below the 30-week trend after a 23% retreat from its 52-week high; nearest support is 6/10, 0.6% below.","supports":[{"level":"$377.91","rating":6},{"level":"$364.96","rating":7},{"level":"$343.32","rating":8}],"buyZone":"Near $377.91 on a controlled pullback","invalidation":"Daily close below $377.91","catalyst":"Watch $406.77 for a 20-session breakout; $377.91 is the nearest closing support.","price":380.14,"pullbackStatus":null,"riskDial":null,"dataNote":"Friday 10/02/2026 close"},{"symbol":"SLV","label":"iShares Silver Trust","category":"Metals","priceDisplay":"$54.74","changePercent":-0.5089,"dailyScore":1,"weeklyScore":3,"monthlyScore":1,"stage":"Stage 4","stageEvidence":"48% below the 52-week high and 12.7% below the 30-week trend; the mature decline overrides the transition band; nearest support is 6/10, 0.4% below.","supports":[{"level":"$54.51","rating":6},{"level":"$50.39","rating":7},{"level":"$39.82","rating":8}],"buyZone":"Near $54.51 on a controlled pullback","invalidation":"Daily close below $54.51","catalyst":"Watch $60.73 for a 20-session breakout; $54.51 is the nearest closing support.","price":54.74,"pullbackStatus":"Healthy pullback","riskDial":"Caution"}];
+var COLORS = {
+  "Stage 1": "#64748b",
+  "Stage 2": "#16a34a",
+  "Stage 3": "#d97706",
+  "Stage 4": "#dc2626",
+  "Stage 1 → 2": "#16a34a",
+  "Stage 2 → 3": "#d97706",
+  "Stage 3 → 4": "#dc2626"
+};
+var STAGE_ORDER = ["Stage 1 → 2", "Stage 2 → 3", "Stage 3 → 4", "Stage 1", "Stage 2", "Stage 3", "Stage 4"];
+var STAGE_NAMES = {
+  "Stage 1": "Stage 1 · Basing",
+  "Stage 2": "Stage 2 · Advancing",
+  "Stage 3": "Stage 3 · Topping",
+  "Stage 4": "Stage 4 · Declining",
+  "Stage 1 → 2": "Stage 1 → 2 · Breakout",
+  "Stage 2 → 3": "Stage 2 → 3 · Caution",
+  "Stage 3 → 4": "Stage 3 → 4 · Breakdown"
+};
+var CAT_ORDER = ["Market", "Crypto", "Mag 7", "Growth", "Metals"];
+var view = "stage";
+
+function esc(s){
+  return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
+}
+function cardHTML(c){
+  var col = COLORS[c.stage] || "#9ca3af";
+  var chg = c.changePercent;
+  var cls = chg >= 0 ? "up" : "dn";
+  var sign = chg >= 0 ? "+" : "-";
+  var sups = (c.supports || []).map(function(s){
+    return '<div class="sup"><b>' + esc(s.level) + '</b> <span class="' + (s.rating >= 7 ? "up" : "") + '">' + s.rating + '/10</span></div>';
+  }).join("");
+  if (!(c.supports || []).length){
+    sups = '<div class="meta"><span class="k">Supports:</span> n/a</div>';
+  }
+  var html = '<div class="card" style="border-left-color:' + col + '">'
+    + '<div class="row1"><div><span class="sym">' + esc(c.symbol) + '</span><span class="lbl">' + esc(c.label) + '</span><span class="lbl">&middot; ' + esc(c.category) + '</span></div>'
+    + '<div class="pricewrap"><span class="price">' + esc(c.priceDisplay) + '</span><span class="chg ' + cls + '">' + sign + Math.abs(chg).toFixed(1) + '%</span></div></div>'
+    + '<span class="pill" style="background:' + col + '">' + esc(c.stage) + '</span>'
+    + '<div class="scores"><span>Daily <b>' + c.dailyScore + '</b></span><span>Weekly <b>' + c.weeklyScore + '</b></span><span>Monthly <b>' + c.monthlyScore + '</b></span></div>'
+    + '<div class="ev">' + esc(c.stageEvidence) + '</div>'
+    + sups
+    + '<div class="meta"><span class="k">Buy zone:</span> ' + esc(c.buyZone == null ? "n/a" : c.buyZone) + '</div>'
+    + '<div class="meta"><span class="k">Invalidation:</span> ' + esc(c.invalidation == null ? "n/a" : c.invalidation) + '</div>'
+    + '<div class="meta"><span class="k">Catalyst:</span> ' + esc(c.catalyst) + '</div>'
+    + (c.dataNote ? '<div class="meta"><span class="k">Note:</span> ' + esc(c.dataNote) + '</div>' : '')
+    + '</div>';
+  return html;
+}
+function setView(v){
+  view = v;
+  var bs = document.getElementById("btnStage");
+  var bc = document.getElementById("btnCat");
+  bs.className = v === "stage" ? "active" : "";
+  bc.className = v === "cat" ? "active" : "";
+  bs.setAttribute("aria-pressed", v === "stage" ? "true" : "false");
+  bc.setAttribute("aria-pressed", v === "cat" ? "true" : "false");
+  render();
+}
+function render(){
+  var q = document.getElementById("q").value.trim().toLowerCase();
+  var list = CARDS.filter(function(c){
+    return !q || c.symbol.toLowerCase().indexOf(q) >= 0 || c.label.toLowerCase().indexOf(q) >= 0;
+  });
+  var board = document.getElementById("board");
+  if (!list.length){
+    board.innerHTML = '<div class="empty">No cards match that filter.</div>';
+    return;
+  }
+  var out = "";
+  if (view === "stage"){
+    STAGE_ORDER.forEach(function(st){
+      var g = list.filter(function(c){ return c.stage === st; });
+      if (!g.length) return;
+      out += '<section class="group"><h2><span class="dot" style="background:' + (COLORS[st] || "#9ca3af") + '"></span>' + esc(STAGE_NAMES[st] || st) + ' (' + g.length + ')</h2><div class="cards">'
+        + g.map(cardHTML).join("") + "</div></section>";
+    });
+    var other = list.filter(function(c){ return STAGE_ORDER.indexOf(c.stage) < 0; });
+    if (other.length) out += '<section class="group"><h2>Other (' + other.length + ')</h2><div class="cards">' + other.map(cardHTML).join("") + "</div></section>";
+  } else {
+    CAT_ORDER.forEach(function(cat){
+      var g = list.filter(function(c){ return c.category === cat; });
+      if (!g.length) return;
+      out += '<section class="group"><h2>' + esc(cat) + ' (' + g.length + ')</h2><div class="cards">'
+        + g.map(cardHTML).join("") + "</div></section>";
+    });
+  }
+  board.innerHTML = out;
+}
+document.getElementById("btnStage").addEventListener("click", function(){ setView("stage"); });
+document.getElementById("btnCat").addEventListener("click", function(){ setView("cat"); });
+document.getElementById("q").addEventListener("input", render);
+render();
+</script>
+</body>
+</html>
