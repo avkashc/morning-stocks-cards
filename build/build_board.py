@@ -12,7 +12,8 @@ Dataset format:
 If template.html is omitted, uses board_template.html alongside this script.
 """
 import json, sys, os, html as htmlmod
-from datetime import datetime, timedelta
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 def format_price(card):
@@ -29,7 +30,8 @@ def format_price(card):
 def build_cards(cards):
     out = []
     for c in cards:
-        card = {
+        card = dict(c)
+        card.update({
             "symbol": c.get("symbol"),
             "label": c.get("label"),
             "category": c.get("category"),
@@ -47,7 +49,19 @@ def build_cards(cards):
             "price": c.get("price"),
             "pullbackStatus": c.get("pullbackStatus"),
             "riskDial": c.get("riskDial"),
-        }
+        })
+        scores = c.get("score_breakdown") or {}
+        for horizon in ("daily", "weekly", "monthly"):
+            if horizon in scores:
+                card[horizon + "Score"] = scores[horizon].get("value")
+        if "stage_detail" in c:
+            detail = c.get("stage_detail") or {}
+            card["stage"] = detail.get("stage")
+            card["stageEvidence"] = detail.get("evidence")
+        if "pullback_detail" in c:
+            card["pullbackStatus"] = (c.get("pullback_detail") or {}).get("status")
+        if "risk_detail" in c:
+            card["riskDial"] = (c.get("risk_detail") or {}).get("dial")
         if c.get("priceUnit"):
             card["priceUnit"] = c["priceUnit"]
         if c.get("dataNote"):
@@ -78,27 +92,29 @@ def main():
     cards = build_cards(dataset.get("cards", []))
     cards_json = json.dumps(cards, separators=(",", ":"))
 
-    # Title date: e.g. "Monday, October 5, 2026"
-    # Parse from asOf (UTC ISO) and convert to America/New_York.
-    # EDT (UTC-4) applies Mar–Nov; EST (UTC-5) Nov–Mar. We approximate
-    # with EDT for the morning-cards use case; override via title_date
-    # in the dataset if exactness matters.
+    asof_text = dataset.get("snapshot_utc") or dataset.get("asOf")
+    display_time = dataset.get("snapshot_et") or dataset.get("asOfET") or asof_text or "Timestamp unavailable"
     try:
-        asof = datetime.fromisoformat(dataset["asOf"].replace("Z", "+00:00"))
-        # Simple DST check: EDT roughly Apr–Oct
-        is_dst = 4 <= asof.month <= 10
-        et = asof - timedelta(hours=4 if is_dst else 5)
-        title_date = et.strftime("%A, %B %-d, %Y")
-    except Exception:
-        title_date = dataset.get("asOfET", "")
-
+        asof = datetime.fromisoformat(asof_text.replace("Z", "+00:00"))
+        et = asof.astimezone(ZoneInfo("America/New_York"))
+        title_date = et.strftime("%A, %B %d, %Y")
+    except (ValueError, TypeError, AttributeError):
+        title_date = display_time
+    notes = dataset.get("dataNotes") or "Quote and analytical times are shown per card; trend scores describe price history."
+    versions = dataset.get("methodology_versions") or {}
     footer = (f"Snapshot #{dataset.get('snapshot_id')} &middot; "
-              f"Data as of {htmlmod.escape(dataset.get('asOfET', ''))} &middot; "
-              f"{htmlmod.escape(dataset.get('dataNotes', ''))}")
+              f"{htmlmod.escape(display_time)} &middot; "
+              f"{htmlmod.escape(notes)}")
+    if versions:
+        footer += "<br>" + htmlmod.escape(" · ".join(f"{k} {v}" for k, v in versions.items()))
+    # Prevent dataset text from terminating the inline script element.
+    cards_json = cards_json.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
     html = template.replace("{{CARDS_JSON}}", cards_json)
     html = html.replace("{{TITLE_DATE}}", htmlmod.escape(title_date))
     html = html.replace("{{FOOTER_HTML}}", footer)
+    html = html.replace("{{ASOF_ET}}", htmlmod.escape(display_time))
+    html = html.replace("{{DATA_NOTES}}", htmlmod.escape(notes))
 
     with open(output_path, "w") as f:
         f.write(html)
@@ -107,3 +123,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
