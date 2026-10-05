@@ -62,7 +62,7 @@
     background:var(--surface); border-radius:10px; padding:16px;
     border-left:5px solid #9ca3af; box-shadow:var(--shadow);
   }
-  .row1{display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:2px}
+  .row1{flex-wrap:wrap;display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:2px}
   .sym{font-size:17px; font-weight:700}
   .lbl{font-size:12px; color:var(--ink-3); margin-left:6px}
   .pricewrap{text-align:right; white-space:nowrap}
@@ -88,13 +88,22 @@
     .search{width:100%; margin-left:0}
     header.top h1{font-size:20px}
   }
+  .statusline{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .badge{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--control-bg)}
+  .warning{color:var(--dn);font-weight:600}
+  details{border-top:1px solid var(--line);margin-top:12px;padding-top:10px;font-size:12px;overflow-wrap:anywhere}
+  summary{cursor:pointer;color:var(--ink-2);font-weight:600}
+  summary:focus-visible{outline:2px solid #2563eb}
+  .detailrow{margin-top:8px;line-height:1.5;color:var(--ink-2)}
+  .detailrow pre{white-space:pre-wrap;font:inherit}
+  .scores span{flex:1;min-width:80px}.scores small{display:block;font-size:10px}
 </style>
 </head>
 <body>
 <header class="top">
-  <h1>TOTAL CRYPTO leads trend strength while NFLX is under the most pressure.</h1>
-  <p>Mon Oct 5, 2026, 7:57 AM ET (premarket)</p>
-  <p>Equities are Friday's closes (premarket Monday); crypto is live (24h basis); GLD data is the Friday 10/02/2026 close.</p>
+  <h1>Market trend cards</h1>
+  <p>{{ASOF_ET}}</p>
+  <p>{{DATA_NOTES}}</p>
   <div class="legend" aria-label="Stage color legend">
     <span class="item"><span class="dot" style="background:#64748b"></span>Stage 1 &middot; Basing</span>
     <span class="item"><span class="dot" style="background:#16a34a"></span>Stage 2 &middot; Advancing</span>
@@ -140,30 +149,56 @@ function esc(s){
     return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
   });
 }
+function present(v){ return v == null || v === "" ? "n/a" : esc(v); }
+function timeET(v){
+  if (!v) return "Unavailable";
+  var d = new Date(v);
+  return isNaN(d.getTime()) ? esc(v) : esc(d.toLocaleString("en-US", {timeZone:"America/New_York",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",timeZoneName:"short"}));
+}
+function detailHTML(label, block){
+  if (!block) return "";
+  var text = block.reason || block.evidence;
+  var meta = [block.rule_id, block.rule_version, block.provenance].filter(Boolean).map(esc).join(" · ");
+  return '<div class="detailrow"><b>' + esc(label) + '</b> ' + meta
+    + (text ? '<div>' + esc(text) + '</div>' : '')
+    + (block.inputs ? '<pre>' + esc(JSON.stringify(block.inputs, null, 2)) + '</pre>' : '') + '</div>';
+}
 function cardHTML(c){
-  var col = COLORS[c.stage] || "#9ca3af";
-  var chg = c.changePercent;
-  var cls = chg >= 0 ? "up" : "dn";
-  var sign = chg >= 0 ? "+" : "-";
-  var sups = (c.supports || []).map(function(s){
-    return '<div class="sup"><b>' + esc(s.level) + '</b> <span class="' + (s.rating >= 7 ? "up" : "") + '">' + s.rating + '/10</span></div>';
+  var col = COLORS[c.stage] || "#64748b";
+  var validChange = typeof c.changePercent === "number" && Number.isFinite(c.changePercent);
+  var chg = validChange ? '<span class="chg '+(c.changePercent >= 0 ? "up" : "dn")+'">'+(c.changePercent > 0 ? "+" : "")+c.changePercent.toFixed(1)+'%</span>' : '<span class="chg">n/a</span>';
+  var dq = c.data_quality || {};
+  var quality = dq.status || "Unavailable";
+  var scores = [["Short-term","daily",5,20],["Intermediate","weekly",20,60],["Long-term","monthly",60,150]].map(function(h){
+    var block = (c.score_breakdown || {})[h[1]];
+    var windows = block && block.windows || [h[2],h[3]];
+    return '<span>'+h[0]+' <b>'+present(c[h[1]+"Score"])+'</b><small>'+esc(windows.join(" / "))+' daily bars · /10</small></span>';
   }).join("");
-  if (!(c.supports || []).length){
-    sups = '<div class="meta"><span class="k">Supports:</span> n/a</div>';
-  }
-  var html = '<div class="card" style="border-left-color:' + col + '">'
-    + '<div class="row1"><div><span class="sym">' + esc(c.symbol) + '</span><span class="lbl">' + esc(c.label) + '</span><span class="lbl">&middot; ' + esc(c.category) + '</span></div>'
-    + '<div class="pricewrap"><span class="price">' + esc(c.priceDisplay) + '</span><span class="chg ' + cls + '">' + sign + Math.abs(chg).toFixed(1) + '%</span></div></div>'
-    + '<span class="pill" style="background:' + col + '">' + esc(c.stage) + '</span>'
-    + '<div class="scores"><span>Daily <b>' + c.dailyScore + '</b></span><span>Weekly <b>' + c.weeklyScore + '</b></span><span>Monthly <b>' + c.monthlyScore + '</b></span></div>'
-    + '<div class="ev">' + esc(c.stageEvidence) + '</div>'
-    + sups
-    + '<div class="meta"><span class="k">Buy zone:</span> ' + esc(c.buyZone == null ? "n/a" : c.buyZone) + '</div>'
-    + '<div class="meta"><span class="k">Invalidation:</span> ' + esc(c.invalidation == null ? "n/a" : c.invalidation) + '</div>'
-    + '<div class="meta"><span class="k">Catalyst:</span> ' + esc(c.catalyst) + '</div>'
-    + (c.dataNote ? '<div class="meta"><span class="k">Note:</span> ' + esc(c.dataNote) + '</div>' : '')
-    + '</div>';
-  return html;
+  var sups = (c.supports || []).map(function(s){return '<div class="sup"><b>'+present(s.level)+'</b> '+present(s.rating)+'/10</div>';}).join("");
+  var details = detailHTML("Data",dq)+detailHTML("Stage",c.stage_detail)+detailHTML("Pullback",c.pullback_detail)+detailHTML("Risk",c.risk_detail);
+  Object.keys(c.score_breakdown || {}).forEach(function(h){
+    var block = c.score_breakdown[h];
+    details += detailHTML(h+' trend',block);
+    if (block.components) details += '<div class="detailrow"><pre>'+esc(JSON.stringify(block.components,null,2))+'</pre></div>';
+    else details += '<div class="detailrow">Component trace unavailable.</div>';
+  });
+  if(c.emas) details += '<div class="detailrow"><b>Moving averages</b><pre>'+esc(JSON.stringify(c.emas,null,2))+'</pre></div>';
+  return '<article class="card" style="border-left-color:'+col+'">'
+    + '<div class="row1"><div><span class="sym">'+present(c.symbol)+'</span><span class="lbl">'+present(c.label)+'</span><span class="lbl"> · '+present(c.category)+'</span></div><div class="pricewrap"><span class="price">'+present(c.priceDisplay)+'</span>'+chg+'</div></div>'
+    + '<span class="pill" style="background:'+col+'">'+present(c.stage)+'</span>'
+    + '<div class="scores">'+scores+'</div>'
+    + '<div class="statusline"><span class="badge">Risk: '+present(c.riskDial)+'</span><span class="badge">'+present(c.pullbackStatus)+'</span><span class="badge '+(quality === "degraded" || quality === "stale" ? "warning" : "")+'">Data: '+esc(quality)+'</span></div>'
+    + '<div class="ev">'+present(c.stageEvidence)+'</div>'
+    + (c.symbol === "TOTAL CRYPTO" ? '<div class="meta">Total market cap quote · BTC + ETH market-cap trend proxy · non-tradable</div>' : '')
+    + '<div class="meta">Quote captured: '+timeET(dq.quote_timestamp)+'</div>'
+    + '<div class="meta">Analytical cutoff: '+present(dq.analytical_cutoff)+'</div>'
+    + (dq.cutoff_note ? '<div class="meta">'+esc(dq.cutoff_note)+'</div>' : '')
+    + '<div class="meta"><span class="k">Supports:</span></div>'+(sups || '<div class="sup">n/a</div>')
+    + '<div class="meta"><span class="k">Buy zone:</span> '+present(c.buyZone)+'</div>'
+    + '<div class="meta"><span class="k">Invalidation:</span> '+present(c.invalidation)+'</div>'
+    + '<div class="meta"><span class="k">Catalyst:</span> '+present(c.catalyst)+'</div>'
+    + (c.dataNote ? '<div class="meta">'+esc(c.dataNote)+'</div>' : '')
+    + (details ? '<details><summary>Why this classification? · Data and calculations</summary>'+details+'</details>' : '')+'</article>';
 }
 function setView(v){
   view = v;
@@ -178,7 +213,7 @@ function setView(v){
 function render(){
   var q = document.getElementById("q").value.trim().toLowerCase();
   var list = CARDS.filter(function(c){
-    return !q || c.symbol.toLowerCase().indexOf(q) >= 0 || c.label.toLowerCase().indexOf(q) >= 0;
+    return !q || String(c.symbol || "").toLowerCase().indexOf(q) >= 0 || String(c.label || "").toLowerCase().indexOf(q) >= 0;
   });
   var board = document.getElementById("board");
   if (!list.length){
@@ -196,7 +231,7 @@ function render(){
     var other = list.filter(function(c){ return STAGE_ORDER.indexOf(c.stage) < 0; });
     if (other.length) out += '<section class="group"><h2>Other (' + other.length + ')</h2><div class="cards">' + other.map(cardHTML).join("") + "</div></section>";
   } else {
-    CAT_ORDER.forEach(function(cat){
+    CAT_ORDER.concat(list.map(function(c){return c.category;}).filter(function(cat,i,a){return CAT_ORDER.indexOf(cat)<0 && a.indexOf(cat)===i;})).forEach(function(cat){
       var g = list.filter(function(c){ return c.category === cat; });
       if (!g.length) return;
       out += '<section class="group"><h2>' + esc(cat) + ' (' + g.length + ')</h2><div class="cards">'
@@ -212,3 +247,4 @@ render();
 </script>
 </body>
 </html>
+
