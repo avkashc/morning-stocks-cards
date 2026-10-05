@@ -97,6 +97,7 @@
   .detailrow{margin-top:8px;line-height:1.5;color:var(--ink-2)}
   .detailrow pre{white-space:pre-wrap;font:inherit}
   .scores span{flex:1;min-width:80px}.scores small{display:block;font-size:10px}
+.measurements{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:12px}.metrics{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}.metrics caption{text-align:left;color:var(--ink-3);margin-bottom:6px}.metrics th,.metrics td{text-align:left;padding:5px 3px;border-bottom:1px solid var(--line)}.preview summary{color:var(--ink);letter-spacing:.02em}
 </style>
 </head>
 <body>
@@ -163,6 +164,34 @@ function detailHTML(label, block){
     + (text ? '<div>' + esc(text) + '</div>' : '')
     + (block.inputs ? '<pre>' + esc(JSON.stringify(block.inputs, null, 2)) + '</pre>' : '') + '</div>';
 }
+function metric(v, unit){return typeof v === "number" && Number.isFinite(v) ? esc(v.toFixed(2))+(unit || "") : "n/a";}
+function proposedHTML(c){
+  var p=c.proposed_extensions;
+  if(!p) return "";
+  var rs=p.relative_strength || {}, vol=p.volatility || {}, ex=p.extension || {};
+  var cutoff=(p.data_separation || {}).confirmed_bars_cutoff || vol.analytical_cutoff;
+  var rows=Object.keys(rs.periods || {}).map(function(k){
+    var r=rs.periods[k] || {}, spy=r.vs_spy || {}, sector=r.vs_sector || {};
+    return '<tr><td>'+present(k)+'</td><td>'+metric(spy.relative_pp,' pp')+'</td><td>'+present(sector.benchmark)+' '+metric(sector.relative_pp,' pp')+'</td></tr>';
+  }).join('');
+  var out='<div class="measurements"><b>Proposed measurements</b><div class="meta">Completed-bar cutoff: '+present(cutoff)+' · Separate from native snapshot above</div>';
+  out+='<div class="meta">ATR(14): '+metric(vol.atr_14)+' · '+metric(vol.atr_14_pct,'%')+' of analytical price</div>';
+  ['21','50'].forEach(function(n){var e=ex['vs_ema'+n] || {};out+='<div class="meta">Distance from EMA '+n+': '+metric(e.pct,'%')+' · '+metric(e.atr_multiples,' ATR')+'</div>';});
+  out+= rows ? '<table class="metrics"><caption>Relative performance · percentage points</caption><thead><tr><th>Sessions</th><th>vs SPY</th><th>vs sector</th></tr></thead><tbody>'+rows+'</tbody></table>' : '<div class="meta">Relative performance: '+present(rs.reason || rs.availability)+'</div>';
+  out+='</div>';
+  var setups=((p.setup_detail || {}).setups || []).filter(Boolean);
+  out+='<details class="preview"><summary>PREVIEW · Setups and exit candidates</summary><div class="meta">Unvalidated proposed rules · not in production</div>';
+  if(!setups.length) out+='<div class="meta">No proposed setup available.</div>';
+  setups.forEach(function(x){
+    out+='<div class="detailrow"><b>'+present(x.setup_type)+'</b> · '+present((x.state || x.status || '').replace(/_/g,' '))+'<div>Trigger: '+metric(x.trigger_level == null ? x.breakout_level : x.trigger_level)+' · Invalidation: '+metric(x.invalidation_level)+'</div><div>Formation: '+present(x.formation_date)+' · Trigger date: '+present(x.trigger_date)+'</div><div>Trailing candidate: '+metric(x.trailing_level)+'</div>';
+    if(x.risk_distance) out+='<div>Trigger-to-invalidation distance: '+metric(x.risk_distance.dollars)+' · '+metric(x.risk_distance.percent,'%')+' · '+metric(x.risk_distance.atr_multiples,' ATR')+'</div>';
+    if(x.orderly_tier) out+='<div>Pullback tier: '+present(x.orderly_tier)+' · Volume confirmation: '+present(x.volume_confirmation)+'</div>';
+    out+='<div class="meta">'+present(x.setup_id)+' · Rule '+present(x.rule_id)+' '+present(x.rule_version)+'</div></div>';
+  });
+  if(p.exit_plan_candidate) out+='<div class="detailrow"><b>Additional exit candidate details</b><pre>'+esc(JSON.stringify(p.exit_plan_candidate,null,2))+'</pre></div>';
+  out+='</details><details><summary>Proposed measurement sources and calculations</summary><div class="detailrow"><pre>'+esc(JSON.stringify({relative_strength:rs,volatility:vol,extension:ex,data_separation:p.data_separation,methodology_versions:p.methodology_versions},null,2))+'</pre></div></details>';
+  return out;
+}
 function cardHTML(c){
   var col = COLORS[c.stage] || "#64748b";
   var validChange = typeof c.changePercent === "number" && Number.isFinite(c.changePercent);
@@ -198,6 +227,7 @@ function cardHTML(c){
     + '<div class="meta"><span class="k">Invalidation:</span> '+present(c.invalidation)+'</div>'
     + '<div class="meta"><span class="k">Catalyst:</span> '+present(c.catalyst)+'</div>'
     + (c.dataNote ? '<div class="meta">'+esc(c.dataNote)+'</div>' : '')
+    + proposedHTML(c)
     + (details ? '<details><summary>Why this classification? · Data and calculations</summary>'+details+'</details>' : '')+'</article>';
 }
 function setView(v){
