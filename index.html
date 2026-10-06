@@ -191,50 +191,32 @@ function proposedHTML(c){
     out+='<div class="detailrow"><b>'+present(x.setup_type)+'</b> · '+present((x.state || x.status || '').replace(/_/g,' '))+'<div>Trigger: '+metric(x.trigger_level == null ? x.breakout_level : x.trigger_level)+' · Invalidation: '+metric(x.invalidation_level)+'</div><div>Formation: '+present(x.formation_date)+' · Trigger date: '+present(x.trigger_date)+'</div><div>Trailing candidate: '+metric(x.trailing_level)+'</div>';
     if(x.risk_distance) out+='<div>Trigger-to-invalidation distance: '+metric(x.risk_distance.dollars)+' · '+metric(x.risk_distance.percent,'%')+' · '+metric(x.risk_distance.atr_multiples,' ATR')+'</div>';
     if(x.orderly_tier) out+='<div>Pullback tier: '+present(x.orderly_tier)+' · Volume confirmation: '+present(x.volume_confirmation)+'</div>';
-    out+='<div class="meta">'+present(x.setup_id)+' · Rule '+present(x.rule_id)+' '+present(x.rule_version)+'</div></div>';
+    out+='</div>';
   });
-  if(p.exit_plan_candidate) out+='<div class="detailrow"><b>Additional exit candidate details</b><pre>'+esc(JSON.stringify(p.exit_plan_candidate,null,2))+'</pre></div>';
-  out+='</details><details><summary>Proposed measurement sources and calculations</summary><div class="detailrow"><pre>'+esc(JSON.stringify({relative_strength:rs,volatility:vol,extension:ex,data_separation:p.data_separation,methodology_versions:p.methodology_versions},null,2))+'</pre></div></details>';
+  out+='</details>';
   return out;
 }
+function trendLabel(v){return {Focus:'Favorable',Caution:'Mixed',Ignore:'Weak'}[v] || 'Not classified';}
+function dataException(c){
+  var q=c.data_quality || {}, note=c.dataNote;
+  if(note && /^\s*Source\s*:/i.test(note))note='';
+  if(q.status === 'stale' || q.status === 'degraded')return note || q.details || 'Some data is '+q.status;
+  return note || '';
+}
 function fullCardHTML(c){
-  var col = COLORS[c.stage] || "#64748b";
-  var validChange = typeof c.changePercent === "number" && Number.isFinite(c.changePercent);
-  var chg = validChange ? '<span class="chg '+(c.changePercent >= 0 ? "up" : "dn")+'">'+(c.changePercent > 0 ? "+" : "")+c.changePercent.toFixed(1)+'%</span>' : '<span class="chg">n/a</span>';
-  var dq = c.data_quality || {};
-  var quality = dq.status || "Unavailable";
-  var scores = [["Short-term","daily",5,20],["Intermediate","weekly",20,60],["Long-term","monthly",60,150]].map(function(h){
-    var block = (c.score_breakdown || {})[h[1]];
-    var windows = block && block.windows || [h[2],h[3]];
-    return '<span>'+h[0]+' <b>'+present(c[h[1]+"Score"])+'</b><small>'+esc(windows.join(" / "))+' daily bars · /10</small></span>';
-  }).join("");
-  var sups = (c.supports || []).map(function(s){return '<div class="sup"><b>'+present(s.level)+'</b> '+present(s.rating)+'/10</div>';}).join("");
-  var details = detailHTML("Data",dq)+detailHTML("Stage",c.stage_detail)+detailHTML("Pullback",c.pullback_detail)+detailHTML("Risk",c.risk_detail);
-  Object.keys(c.score_breakdown || {}).forEach(function(h){
-    var block = c.score_breakdown[h];
-    details += detailHTML(h+' trend',block);
-    if (block.components) details += '<div class="detailrow"><pre>'+esc(JSON.stringify(block.components,null,2))+'</pre></div>';
-    else details += '<div class="detailrow">Component trace unavailable.</div>';
-  });
-  if(c.emas) details += '<div class="detailrow"><b>Moving averages</b><pre>'+esc(JSON.stringify(c.emas,null,2))+'</pre></div>';
-  return '<article class="card" style="border-left-color:'+col+'">'
-    + '<div class="row1"><div><span class="sym">'+present(c.symbol)+'</span><span class="lbl">'+present(c.label)+'</span><span class="lbl"> · '+present(c.category)+'</span></div><div class="pricewrap"><span class="price">'+present(c.priceDisplay)+'</span>'+chg+'</div></div>'
-    + '<span class="pill" style="background:'+col+'">'+present(c.stage)+'</span>'
-    + '<div class="scores">'+scores+'</div>'
-    + '<div class="statusline"><span class="badge">Risk: '+present(c.riskDial)+'</span><span class="badge">'+present(c.pullbackStatus)+'</span><span class="badge '+(quality === "degraded" || quality === "stale" ? "warning" : "")+'">Data: '+esc(quality)+'</span></div>'
-    + '<div class="ev">'+present(c.stageEvidence)+'</div>'
-    + (c.symbol === "TOTAL CRYPTO" ? '<div class="meta">Total market cap quote · BTC + ETH market-cap trend proxy · non-tradable</div>' : '')
-    + '<div class="meta">Quote captured: '+timeET(dq.quote_timestamp)+'</div>'
-    + '<div class="meta">Analytical cutoff: '+present(dq.analytical_cutoff)+'</div>'
-    + (dq.cutoff_note ? '<div class="meta">'+esc(dq.cutoff_note)+'</div>' : '')
-    + '<div class="meta"><span class="k">Supports:</span></div>'+(sups || '<div class="sup">n/a</div>')
-    + '<div class="meta"><span class="k">Buy zone:</span> '+present(c.buyZone)+'</div>'
-    + '<div class="meta"><span class="k">Invalidation:</span> '+present(c.invalidation)+'</div>'
-    + '<div class="meta"><span class="k">Catalyst:</span> '+present(c.catalyst)+'</div>'
-    + (c.dataNote ? '<div class="meta">'+esc(c.dataNote)+'</div>' : '')
-    + emaDetailHTML(c)
-    + proposedHTML(c)
-    + (details ? '<details><summary>Why this classification? · Data and calculations</summary>'+details+'</details>' : '')+'</article>';
+  var sups=(c.supports || []).map(function(x){return '<div class="sup"><b>'+present(x.level)+'</b> · support rating '+present(x.rating)+'/10</div>';}).join('');
+  var dq=c.data_quality || {}, cutoff=dq.analytical_cutoff;
+  var note=dataException(c);
+  return '<article><div class="meta"><b>Pullback:</b> '+present(c.pullbackStatus)+'</div>'
+    +'<div class="meta"><b>Trend assessment:</b> '+trendLabel(c.riskDial)+'</div>'
+    +(c.stageEvidence?'<div class="meta">'+esc(c.stageEvidence)+'</div>':'')
+    +(cutoff?'<div class="meta">Native analytical cutoff: '+present(cutoff)+'</div>':'')
+    +(note?'<div class="meta data-exception">'+esc(note)+'</div>':'')
+    +'<div class="meta"><b>Support levels</b></div>'+(sups || '<div class="meta">Not provided</div>')
+    +'<div class="meta"><b>Buy zone:</b> '+present(c.buyZone)+'</div>'
+    +'<div class="meta"><b>Invalidation:</b> '+present(c.invalidation)+'</div>'
+    +'<div class="meta"><b>Watch:</b> '+present(c.catalyst)+'</div>'
+    +emaDetailHTML(c)+proposedHTML(c)+'</article>';
 }
 function shortText(v){
   if(!v) return "Summary unavailable";
@@ -254,7 +236,8 @@ function emaPositionHTML(c){
 function emaDetailHTML(c){
   var p=c.ema_analysis;
   if(!p || p === 'unavailable')return '';
-  return '<details><summary>Completed-bar EMA calculations</summary><div class="detailrow">Slope compares the EMA with five completed bars earlier. Crossings compare '+present(p.previous_cutoff)+' → '+present(p.analytical_cutoff)+'.<pre>'+esc(JSON.stringify(p,null,2))+'</pre></div></details>';
+  var rows=['9','21','50'].map(function(n){var e=p['ema_'+n];if(!e || e === 'unavailable')return '';return '<tr><td>'+n+'</td><td>'+metric(e.value)+'</td><td>'+present(e.position)+'</td><td>'+metric(e.slope_5bar_pct,'%')+' '+present(e.slope_direction)+'</td></tr>';}).join('');
+  return '<div class="measurements"><b>Daily EMAs</b><div class="meta">As of '+present(p.analytical_cutoff)+'</div><table class="metrics"><thead><tr><th>EMA</th><th>Value</th><th>Price</th><th>5-bar change</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function comparisonValue(v){
   if(v == null || v === 'unavailable')return 'unavailable';
@@ -266,6 +249,7 @@ function changeLines(obj,prefix){
   Object.keys(obj).forEach(function(k){
     if(['symbol','label','status','summary','has_changes','availability'].indexOf(k)>=0)return;
     var v=obj[k],name=(prefix?prefix+' · ':'')+k;
+    if(k === 'riskDial' && v && typeof v === 'object' && ('from' in v || 'to' in v)){out.push('Trend: '+(v.from === 'unavailable' ? 'unavailable' : trendLabel(v.from))+' → '+(v.to === 'unavailable' ? 'unavailable' : trendLabel(v.to)));return;}
     if(v === 'unavailable')out.push(esc(name)+': comparison unavailable');
     else if(v && typeof v === 'object' && ('from' in v || 'to' in v))out.push(esc(name)+': '+comparisonValue(v.from)+' → '+comparisonValue(v.to));
     else if(v && typeof v === 'object')out=out.concat(changeLines(v,name));
@@ -276,10 +260,10 @@ function cardHTML(c){
   var col=COLORS[c.stage] || '#64748b';
   var ch=typeof c.changePercent === 'number' && Number.isFinite(c.changePercent) ? '<span class="chg '+(c.changePercent>=0?'up':'dn')+'">'+(c.changePercent>0?'+':'')+c.changePercent.toFixed(1)+'%</span>' : '<span class="chg">n/a</span>';
   var quality=(c.data_quality || {}).status;
-  var exception=c.dataNote || (quality && quality !== 'ok' ? 'Data: '+quality : '');
+  var exception=dataException(c);
   var body=fullCardHTML(c).replace(/^<article[^>]*>/,'').replace(/<\/article>$/,'');
   return '<article class="card compact" style="border-left-color:'+col+'"><div class="row1"><div><span class="sym">'+present(c.symbol)+'</span><span class="lbl">'+present(c.label)+'</span></div><div class="pricewrap"><span class="price">'+present(c.priceDisplay)+'</span>'+ch+'</div></div>'
-    +'<div class="statusline"><span class="badge">'+present(c.stage)+'</span><span class="badge">Risk: '+present(c.riskDial)+'</span></div>'
+    +'<div class="statusline"><span class="badge">'+present(c.stage)+'</span><span class="badge">Trend: '+trendLabel(c.riskDial)+'</span></div>'
     +'<div class="compact-scores"><span>Short <b>'+present(c.dailyScore)+'</b></span><span>Intermediate <b>'+present(c.weeklyScore)+'</b></span><span>Long <b>'+present(c.monthlyScore)+'</b></span><small>/10</small></div>'
     +'<p class="ev compact-summary">'+shortText(c.stageEvidence || c.pullbackStatus)+'</p>'
     +emaPositionHTML(c)
@@ -304,15 +288,14 @@ function renderBriefing(){
   var watch=CARDS.filter(function(c){return c.pullbackStatus === 'Healthy pullback' || c.stage === 'Stage 1 → 2';});
   var focus=CARDS.filter(function(c){return c.riskDial === 'Focus';});
   var caution=CARDS.filter(function(c){return c.riskDial === 'Caution' || c.riskDial === 'Ignore';});
-  var issues=CARDS.filter(function(c){var q=(c.data_quality || {}).status;return c.dataNote || (q && q !== 'ok');});
+  var issues=CARDS.filter(function(c){return !!dataException(c);});
   var absent=CARDS.filter(function(c){return !(c.data_quality || {}).status;}).length;
   var previews=CARDS.filter(function(c){return (((c.proposed_extensions || {}).setup_detail || {}).setups || []).some(function(x){return x && x.state === 'triggered';});});
   document.getElementById('briefing').innerHTML='<div class="brief-intro"><p>A daily snapshot of '+CARDS.length+' tickers. Open a symbol for the full analysis.</p></div>'+changeHTML+'<div class="brief-grid">'
     +briefingSection('Setups on watch',watch,function(c){return c.pullbackStatus+' · '+(c.catalyst || c.stageEvidence || '');},'No healthy pullbacks or Stage 1 → 2 transitions reported.')
-    +briefingSection('Worth watching',focus,function(c){return 'Risk: '+c.riskDial+' · '+(c.stageEvidence || '');},'No Focus risk readings reported.')
-    +briefingSection('Caution / Ignore',caution,function(c){return 'Risk: '+c.riskDial+' · '+(c.pullbackStatus || c.stageEvidence || '');},'No Caution or Ignore risk readings reported.')
-    +briefingSection('Data exceptions',issues,function(c){return c.dataNote || (c.data_quality || {}).details || ('Data: '+(c.data_quality || {}).status);},'No explicit data exceptions supplied.')+'</div>'
-    +(absent?'<p class="muted">Per-card quality metadata unavailable for '+absent+' tickers. See snapshot notes above.</p>':'')
+    +briefingSection('Worth watching',focus,function(c){return 'Trend: '+trendLabel(c.riskDial)+' · '+(c.stageEvidence || '');},'No favorable trend assessments reported.')
+    +briefingSection('Needs review',caution,function(c){return 'Trend: '+trendLabel(c.riskDial)+' · '+(c.pullbackStatus || c.stageEvidence || '');},'No mixed or weak trend assessments reported.')
+    +briefingSection('Data exceptions',issues,function(c){return dataException(c);},'No explicit data exceptions supplied.')+'</div>'
     +(previews.length?briefingSection('PREVIEW · Triggered setups',previews,function(c){return 'Proposed, unvalidated setup · open full analysis for its cutoff and trigger date.';},''):'')
     +'<p class="muted">Watch sections describe this snapshot, not changes since yesterday. Order follows the dataset.</p>';
   document.getElementById('briefing').querySelectorAll('[data-symbol]').forEach(function(b){b.addEventListener('click',function(){openSymbol(b.getAttribute('data-symbol'));});});
@@ -379,6 +362,7 @@ setPage('briefing');
 </script>
 </body>
 </html>
+
 
 
 
