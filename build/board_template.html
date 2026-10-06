@@ -232,6 +232,7 @@ function fullCardHTML(c){
     + '<div class="meta"><span class="k">Invalidation:</span> '+present(c.invalidation)+'</div>'
     + '<div class="meta"><span class="k">Catalyst:</span> '+present(c.catalyst)+'</div>'
     + (c.dataNote ? '<div class="meta">'+esc(c.dataNote)+'</div>' : '')
+    + emaDetailHTML(c)
     + proposedHTML(c)
     + (details ? '<details><summary>Why this classification? · Data and calculations</summary>'+details+'</details>' : '')+'</article>';
 }
@@ -240,9 +241,36 @@ function shortText(v){
   var text=String(v); return esc(text.length > 150 ? text.slice(0,147)+'…' : text);
 }
 function emaPositionHTML(c){
-  var p=c.ema_position;
-  if(!p || p.availability === 'unavailable') return '<div class="meta">Completed-bar EMA position: unavailable</div>';
-  return '<div class="meta">EMA position: '+['9','21','50'].map(function(n){return n+': '+present(p['ema'+n]);}).join(' · ')+'</div>';
+  var p=c.ema_analysis;
+  if(!p || p === 'unavailable' || p.availability === 'unavailable') return '<div class="meta">Completed-bar EMA position: unavailable</div>';
+  var rows=['9','21','50'].map(function(n){
+    var e=p['ema_'+n];
+    if(!e || e === 'unavailable')return n+': unavailable';
+    return n+': '+present(e.position)+' · '+present(e.slope_direction);
+  });
+  var crossings=['9','21','50'].filter(function(n){var e=p['ema_'+n];return e && ['bullish','bearish'].indexOf(e.crossing)>=0;}).map(function(n){return 'EMA '+n+' '+present(p['ema_'+n].crossing)+' crossing';});
+  return '<div class="meta">Completed-bar EMAs · '+present(p.analytical_cutoff)+'</div><div class="meta">'+rows.join('<br>')+'</div>'+(crossings.length?'<div class="meta">'+crossings.join(' · ')+' · vs '+present(p.previous_cutoff)+'</div>':'');
+}
+function emaDetailHTML(c){
+  var p=c.ema_analysis;
+  if(!p || p === 'unavailable')return '';
+  return '<details><summary>Completed-bar EMA calculations</summary><div class="detailrow">Slope compares the EMA with five completed bars earlier. Crossings compare '+present(p.previous_cutoff)+' → '+present(p.analytical_cutoff)+'.<pre>'+esc(JSON.stringify(p,null,2))+'</pre></div></details>';
+}
+function comparisonValue(v){
+  if(v == null || v === 'unavailable')return 'unavailable';
+  return esc(typeof v === 'object'?JSON.stringify(v):v);
+}
+function changeLines(obj,prefix){
+  if(!obj || typeof obj !== 'object')return [];
+  var out=[];
+  Object.keys(obj).forEach(function(k){
+    if(['symbol','label','status','summary','has_changes','availability'].indexOf(k)>=0)return;
+    var v=obj[k],name=(prefix?prefix+' · ':'')+k;
+    if(v === 'unavailable')out.push(esc(name)+': comparison unavailable');
+    else if(v && typeof v === 'object' && ('from' in v || 'to' in v))out.push(esc(name)+': '+comparisonValue(v.from)+' → '+comparisonValue(v.to));
+    else if(v && typeof v === 'object')out=out.concat(changeLines(v,name));
+  });
+  return out;
 }
 function cardHTML(c){
   var col=COLORS[c.stage] || '#64748b';
@@ -266,11 +294,11 @@ function briefingSection(title,cards,reason,empty){
 }
 function renderBriefing(){
   var d=DAILY_BRIEFING || {}, changes=Array.isArray(d.changes) ? d.changes : [];
-  var comparison=d.status === 'available';
+  var comparison=d.status !== 'unavailable' && d.availability !== 'unavailable' && d.current_snapshot_id != null && d.previous_snapshot_id != null;
   var changeHTML='<section class="brief-section"><h2>What changed?</h2>';
   if(comparison){
-    changeHTML+='<p class="muted">Compared with snapshot '+present(d.previous_snapshot_id)+' · '+present(d.previous_analytical_cutoff)+' → '+present(d.analytical_cutoff)+'</p>';
-    changeHTML+=changes.length?changes.map(function(x){return '<div class="brief-row"><b>'+present(x.symbol)+'</b><span>'+present(x.summary)+'</span></div>';}).join(''):'<p class="muted">No changes reported in the supplied comparison.</p>';
+    changeHTML+='<p class="muted">Snapshot #'+present(d.current_snapshot_id)+' vs #'+present(d.previous_snapshot_id)+' · Cutoffs: '+comparisonValue(d.previous_cutoff)+' → '+comparisonValue(d.current_cutoff)+'</p>';
+    changeHTML+=changes.length?changes.map(function(x){var lines=changeLines(x,'');return '<div class="brief-row"><b>'+present(x.symbol)+'</b><span>'+(lines.length?lines.join('<br>'):present(x.summary || 'Comparison unavailable for this ticker'))+'</span></div>';}).join(''):'<p class="muted">No changes reported in the supplied comparison.</p>';
   }else changeHTML+='<p class="muted">Comparison unavailable. Muse has not supplied a previous-snapshot comparison.</p>';
   changeHTML+='</section>';
   var watch=CARDS.filter(function(c){return c.pullbackStatus === 'Healthy pullback' || c.stage === 'Stage 1 → 2';});
@@ -351,5 +379,6 @@ setPage('briefing');
 </script>
 </body>
 </html>
+
 
 
