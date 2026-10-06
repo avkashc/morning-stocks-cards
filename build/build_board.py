@@ -110,7 +110,9 @@ def main():
     # Prevent dataset text from terminating the inline script element.
     cards_json = cards_json.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
 
-    html = template.replace("{{CARDS_JSON}}", cards_json)
+    briefing_json = json.dumps(dataset.get("daily_briefing") or {}, separators=(",", ":"))
+    briefing_json = briefing_json.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    html = template.replace("{{CARDS_JSON}}", cards_json).replace("{{BRIEFING_JSON}}", briefing_json)
     html = html.replace("{{TITLE_DATE}}", htmlmod.escape(title_date))
     html = html.replace("{{FOOTER_HTML}}", footer)
     html = html.replace("{{ASOF_ET}}", htmlmod.escape(display_time))
@@ -123,4 +125,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
