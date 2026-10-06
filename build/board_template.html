@@ -277,21 +277,13 @@ function briefingSection(title,cards,reason,empty){
   return '<section class="brief-section"><h2>'+esc(title)+' <span>'+cards.length+'</span></h2>'+(cards.length?briefingRows(cards.slice(0,5),reason):'<p class="muted">'+esc(empty)+'</p>')+(cards.length>5?'<p class="muted">Showing 5 of '+cards.length+' · browse All tickers for the rest.</p>':'')+'</section>';
 }
 function renderBriefing(){
-  var d=DAILY_BRIEFING || {}, changes=Array.isArray(d.changes) ? d.changes : [];
-  var comparison=d.status !== 'unavailable' && d.availability !== 'unavailable' && d.current_snapshot_id != null && d.previous_snapshot_id != null;
-  var changeHTML='<section class="brief-section"><h2>What changed?</h2>';
-  if(comparison){
-    changeHTML+='<p class="muted">Snapshot #'+present(d.current_snapshot_id)+' vs #'+present(d.previous_snapshot_id)+' · Cutoffs: '+comparisonValue(d.previous_cutoff)+' → '+comparisonValue(d.current_cutoff)+'</p>';
-    changeHTML+=changes.length?changes.map(function(x){var lines=changeLines(x,'');return '<div class="brief-row"><b>'+present(x.symbol)+'</b><span>'+(lines.length?lines.join('<br>'):present(x.summary || 'Comparison unavailable for this ticker'))+'</span></div>';}).join(''):'<p class="muted">No changes reported in the supplied comparison.</p>';
-  }else changeHTML+='<p class="muted">Comparison unavailable. Muse has not supplied a previous-snapshot comparison.</p>';
-  changeHTML+='</section>';
   var watch=CARDS.filter(function(c){return c.pullbackStatus === 'Healthy pullback' || c.stage === 'Stage 1 → 2';});
   var focus=CARDS.filter(function(c){return c.riskDial === 'Focus';});
   var caution=CARDS.filter(function(c){return c.riskDial === 'Caution' || c.riskDial === 'Ignore';});
   var issues=CARDS.filter(function(c){return !!dataException(c);});
   var absent=CARDS.filter(function(c){return !(c.data_quality || {}).status;}).length;
   var previews=CARDS.filter(function(c){return (((c.proposed_extensions || {}).setup_detail || {}).setups || []).some(function(x){return x && x.state === 'triggered';});});
-  document.getElementById('briefing').innerHTML='<div class="brief-intro"><p>A daily snapshot of '+CARDS.length+' tickers. Open a symbol for the full analysis.</p></div>'+changeHTML+'<div class="brief-grid">'
+  document.getElementById('briefing').innerHTML='<div class="brief-intro"><p>A daily snapshot of '+CARDS.length+' tickers. Open a symbol for the full analysis.</p></div>'+'<div class="brief-grid">'
     +briefingSection('Setups on watch',watch,function(c){return c.pullbackStatus+' · '+(c.catalyst || c.stageEvidence || '');},'No healthy pullbacks or Stage 1 → 2 transitions reported.')
     +briefingSection('Worth watching',focus,function(c){return 'Trend: '+trendLabel(c.riskDial)+' · '+(c.stageEvidence || '');},'No favorable trend assessments reported.')
     +briefingSection('Needs review',caution,function(c){return 'Trend: '+trendLabel(c.riskDial)+' · '+(c.pullbackStatus || c.stageEvidence || '');},'No mixed or weak trend assessments reported.')
