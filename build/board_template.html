@@ -98,11 +98,12 @@
   .detailrow pre{white-space:pre-wrap;font:inherit}
   .scores span{flex:1;min-width:80px}.scores small{display:block;font-size:10px}
 .measurements{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:12px}.metrics{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}.metrics caption{text-align:left;color:var(--ink-3);margin-bottom:6px}.metrics th,.metrics td{text-align:left;padding:5px 3px;border-bottom:1px solid var(--line)}.preview summary{color:var(--ink);letter-spacing:.02em}
+[hidden]{display:none!important}.page-tabs{display:flex;gap:8px;margin:18px 0}.page-tabs button{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:10px 16px;background:var(--surface);color:var(--ink);cursor:pointer}.page-tabs .active{background:var(--head-bg);color:var(--head-ink)}.brief-intro{color:var(--ink-2);font-size:14px;margin-bottom:18px}.brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.brief-section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}.brief-section h2{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--up);margin-bottom:14px}.brief-section h2 span{color:var(--ink-3);font-size:12px;margin-left:5px}.brief-row{display:flex;align-items:baseline;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.5}.brief-row:last-child{border:0}.brief-row span{flex:1}.symbol-link{font:inherit;font-weight:700;color:var(--up);background:none;border:0;padding:0;cursor:pointer;min-width:60px;text-align:left}.symbol-link:hover{text-decoration:underline}.muted{font-size:12px;color:var(--ink-3);line-height:1.6;margin:8px 0}.compact-scores{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink-2);margin:12px 0}.compact-scores b{color:var(--ink);font-size:14px}.compact-summary{margin-bottom:6px;min-height:38px}.compact .card-details{margin-top:12px}.analysis-body{padding-top:16px}.data-exception{color:var(--dn)}button:focus-visible{outline:2px solid #2563eb;outline-offset:3px}@media(max-width:700px){.brief-grid{grid-template-columns:1fr;gap:0}.brief-section{padding:16px}.brief-row{font-size:13px}}
 </style>
 </head>
 <body>
 <header class="top">
-  <h1>Market trend cards</h1>
+  <h1>Morning market briefing</h1>
   <p>{{ASOF_ET}}</p>
   <p>{{DATA_NOTES}}</p>
   <div class="legend" aria-label="Stage color legend">
@@ -112,7 +113,9 @@
     <span class="item"><span class="dot" style="background:#dc2626"></span>Stage 4 &middot; Declining</span>
   </div>
 </header>
-<div class="controls">
+<nav class="page-tabs" aria-label="Dashboard view"><button id="btnBrief" type="button" class="active" aria-pressed="true">Daily briefing</button><button id="btnCards" type="button" aria-pressed="false">All tickers</button></nav>
+<div id="briefing"></div>
+<div id="cardControls" class="controls">
   <div class="seg" role="group" aria-label="Group cards by">
     <button id="btnStage" type="button" class="active" aria-pressed="true">Stage</button>
     <button id="btnCat" type="button" aria-pressed="false">Category</button>
@@ -123,6 +126,8 @@
 <footer>{{FOOTER_HTML}}</footer>
 <script>
 var CARDS = {{CARDS_JSON}};
+var DAILY_BRIEFING = {{BRIEFING_JSON}};
+var pageView = "briefing";
 var COLORS = {
   "Stage 1": "#64748b",
   "Stage 2": "#16a34a",
@@ -192,7 +197,7 @@ function proposedHTML(c){
   out+='</details><details><summary>Proposed measurement sources and calculations</summary><div class="detailrow"><pre>'+esc(JSON.stringify({relative_strength:rs,volatility:vol,extension:ex,data_separation:p.data_separation,methodology_versions:p.methodology_versions},null,2))+'</pre></div></details>';
   return out;
 }
-function cardHTML(c){
+function fullCardHTML(c){
   var col = COLORS[c.stage] || "#64748b";
   var validChange = typeof c.changePercent === "number" && Number.isFinite(c.changePercent);
   var chg = validChange ? '<span class="chg '+(c.changePercent >= 0 ? "up" : "dn")+'">'+(c.changePercent > 0 ? "+" : "")+c.changePercent.toFixed(1)+'%</span>' : '<span class="chg">n/a</span>';
@@ -229,6 +234,73 @@ function cardHTML(c){
     + (c.dataNote ? '<div class="meta">'+esc(c.dataNote)+'</div>' : '')
     + proposedHTML(c)
     + (details ? '<details><summary>Why this classification? · Data and calculations</summary>'+details+'</details>' : '')+'</article>';
+}
+function shortText(v){
+  if(!v) return "Summary unavailable";
+  var text=String(v); return esc(text.length > 150 ? text.slice(0,147)+'…' : text);
+}
+function emaPositionHTML(c){
+  var p=c.ema_position;
+  if(!p || p.availability === 'unavailable') return '<div class="meta">Completed-bar EMA position: unavailable</div>';
+  return '<div class="meta">EMA position: '+['9','21','50'].map(function(n){return n+': '+present(p['ema'+n]);}).join(' · ')+'</div>';
+}
+function cardHTML(c){
+  var col=COLORS[c.stage] || '#64748b';
+  var ch=typeof c.changePercent === 'number' && Number.isFinite(c.changePercent) ? '<span class="chg '+(c.changePercent>=0?'up':'dn')+'">'+(c.changePercent>0?'+':'')+c.changePercent.toFixed(1)+'%</span>' : '<span class="chg">n/a</span>';
+  var quality=(c.data_quality || {}).status;
+  var exception=c.dataNote || (quality && quality !== 'ok' ? 'Data: '+quality : '');
+  var body=fullCardHTML(c).replace(/^<article[^>]*>/,'').replace(/<\/article>$/,'');
+  return '<article class="card compact" style="border-left-color:'+col+'"><div class="row1"><div><span class="sym">'+present(c.symbol)+'</span><span class="lbl">'+present(c.label)+'</span></div><div class="pricewrap"><span class="price">'+present(c.priceDisplay)+'</span>'+ch+'</div></div>'
+    +'<div class="statusline"><span class="badge">'+present(c.stage)+'</span><span class="badge">Risk: '+present(c.riskDial)+'</span></div>'
+    +'<div class="compact-scores"><span>Short <b>'+present(c.dailyScore)+'</b></span><span>Intermediate <b>'+present(c.weeklyScore)+'</b></span><span>Long <b>'+present(c.monthlyScore)+'</b></span><small>/10</small></div>'
+    +'<p class="ev compact-summary">'+shortText(c.stageEvidence || c.pullbackStatus)+'</p>'
+    +emaPositionHTML(c)
+    +(exception ? '<div class="meta data-exception">'+esc(exception)+'</div>' : '')
+    +'<details class="card-details"><summary>Open full analysis</summary><div class="analysis-body">'+body+'</div></details></article>';
+}
+function briefingRows(cards, reason){
+  return cards.map(function(c){return '<div class="brief-row"><button class="symbol-link" type="button" data-symbol="'+esc(c.symbol)+'">'+present(c.symbol)+'</button><span>'+shortText(reason(c))+'</span></div>';}).join('');
+}
+function briefingSection(title,cards,reason,empty){
+  return '<section class="brief-section"><h2>'+esc(title)+' <span>'+cards.length+'</span></h2>'+(cards.length?briefingRows(cards.slice(0,5),reason):'<p class="muted">'+esc(empty)+'</p>')+(cards.length>5?'<p class="muted">Showing 5 of '+cards.length+' · browse All tickers for the rest.</p>':'')+'</section>';
+}
+function renderBriefing(){
+  var d=DAILY_BRIEFING || {}, changes=Array.isArray(d.changes) ? d.changes : [];
+  var comparison=d.status === 'available';
+  var changeHTML='<section class="brief-section"><h2>What changed?</h2>';
+  if(comparison){
+    changeHTML+='<p class="muted">Compared with snapshot '+present(d.previous_snapshot_id)+' · '+present(d.previous_analytical_cutoff)+' → '+present(d.analytical_cutoff)+'</p>';
+    changeHTML+=changes.length?changes.map(function(x){return '<div class="brief-row"><b>'+present(x.symbol)+'</b><span>'+present(x.summary)+'</span></div>';}).join(''):'<p class="muted">No changes reported in the supplied comparison.</p>';
+  }else changeHTML+='<p class="muted">Comparison unavailable. Muse has not supplied a previous-snapshot comparison.</p>';
+  changeHTML+='</section>';
+  var watch=CARDS.filter(function(c){return c.pullbackStatus === 'Healthy pullback' || c.stage === 'Stage 1 → 2';});
+  var focus=CARDS.filter(function(c){return c.riskDial === 'Focus';});
+  var caution=CARDS.filter(function(c){return c.riskDial === 'Caution' || c.riskDial === 'Ignore';});
+  var issues=CARDS.filter(function(c){var q=(c.data_quality || {}).status;return c.dataNote || (q && q !== 'ok');});
+  var absent=CARDS.filter(function(c){return !(c.data_quality || {}).status;}).length;
+  var previews=CARDS.filter(function(c){return (((c.proposed_extensions || {}).setup_detail || {}).setups || []).some(function(x){return x && x.state === 'triggered';});});
+  document.getElementById('briefing').innerHTML='<div class="brief-intro"><p>A daily snapshot of '+CARDS.length+' tickers. Open a symbol for the full analysis.</p></div>'+changeHTML+'<div class="brief-grid">'
+    +briefingSection('Setups on watch',watch,function(c){return c.pullbackStatus+' · '+(c.catalyst || c.stageEvidence || '');},'No healthy pullbacks or Stage 1 → 2 transitions reported.')
+    +briefingSection('Worth watching',focus,function(c){return 'Risk: '+c.riskDial+' · '+(c.stageEvidence || '');},'No Focus risk readings reported.')
+    +briefingSection('Caution / Ignore',caution,function(c){return 'Risk: '+c.riskDial+' · '+(c.pullbackStatus || c.stageEvidence || '');},'No Caution or Ignore risk readings reported.')
+    +briefingSection('Data exceptions',issues,function(c){return c.dataNote || (c.data_quality || {}).details || ('Data: '+(c.data_quality || {}).status);},'No explicit data exceptions supplied.')+'</div>'
+    +(absent?'<p class="muted">Per-card quality metadata unavailable for '+absent+' tickers. See snapshot notes above.</p>':'')
+    +(previews.length?briefingSection('PREVIEW · Triggered setups',previews,function(c){return 'Proposed, unvalidated setup · open full analysis for its cutoff and trigger date.';},''):'')
+    +'<p class="muted">Watch sections describe this snapshot, not changes since yesterday. Order follows the dataset.</p>';
+  document.getElementById('briefing').querySelectorAll('[data-symbol]').forEach(function(b){b.addEventListener('click',function(){openSymbol(b.getAttribute('data-symbol'));});});
+}
+function setPage(v){
+  pageView=v;
+  ['Brief','Cards'].forEach(function(n){var active=(n==='Brief') === (v==='briefing');var b=document.getElementById('btn'+n);b.className=active?'active':'';b.setAttribute('aria-pressed',String(active));});
+  document.getElementById('briefing').hidden=v!=='briefing';
+  document.getElementById('cardControls').hidden=v!=='cards';
+  document.getElementById('board').hidden=v!=='cards';
+  if(v==='briefing')renderBriefing();else render();
+}
+function openSymbol(symbol){
+  document.getElementById('q').value=symbol;setPage('cards');
+  var panel=document.getElementById('board').querySelector('.card-details');
+  if(panel){panel.open=true;panel.querySelector('summary').focus();panel.scrollIntoView({block:'nearest',behavior:'smooth'});}
 }
 function setView(v){
   view = v;
@@ -273,8 +345,11 @@ function render(){
 document.getElementById("btnStage").addEventListener("click", function(){ setView("stage"); });
 document.getElementById("btnCat").addEventListener("click", function(){ setView("cat"); });
 document.getElementById("q").addEventListener("input", render);
-render();
+document.getElementById('btnBrief').addEventListener('click',function(){setPage('briefing');});
+document.getElementById('btnCards').addEventListener('click',function(){document.getElementById('q').value='';setPage('cards');});
+setPage('briefing');
 </script>
 </body>
 </html>
+
 
