@@ -99,6 +99,7 @@
   .scores span{flex:1;min-width:80px}.scores small{display:block;font-size:10px}
 .measurements{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:12px}.metrics{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}.metrics caption{text-align:left;color:var(--ink-3);margin-bottom:6px}.metrics th,.metrics td{text-align:left;padding:5px 3px;border-bottom:1px solid var(--line)}.preview summary{color:var(--ink);letter-spacing:.02em}
 [hidden]{display:none!important}.page-tabs{display:flex;gap:8px;margin:18px 0}.page-tabs button{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:10px 16px;background:var(--surface);color:var(--ink);cursor:pointer}.page-tabs .active{background:var(--head-bg);color:var(--head-ink)}.brief-intro{color:var(--ink-2);font-size:14px;margin-bottom:18px}.brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.brief-section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}.brief-section h2{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--up);margin-bottom:14px}.brief-section h2 span{color:var(--ink-3);font-size:12px;margin-left:5px}.brief-row{display:flex;align-items:baseline;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.5}.brief-row:last-child{border:0}.brief-row span{flex:1}.symbol-link{font:inherit;font-weight:700;color:var(--up);background:none;border:0;padding:0;cursor:pointer;min-width:60px;text-align:left}.symbol-link:hover{text-decoration:underline}.muted{font-size:12px;color:var(--ink-3);line-height:1.6;margin:8px 0}.compact-scores{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink-2);margin:12px 0}.compact-scores b{color:var(--ink);font-size:14px}.compact-summary{margin-bottom:6px;min-height:38px}.compact .card-details{margin-top:12px}.analysis-body{padding-top:16px}.data-exception{color:var(--dn)}button:focus-visible{outline:2px solid #2563eb;outline-offset:3px}@media(max-width:700px){.brief-grid{grid-template-columns:1fr;gap:0}.brief-section{padding:16px}.brief-row{font-size:13px}}
+.watch-item{padding:14px 0;border-bottom:1px solid var(--line)}.watch-item:last-child{border-bottom:0}
 </style>
 </head>
 <body>
@@ -127,6 +128,7 @@
 <script>
 var CARDS = {{CARDS_JSON}};
 var DAILY_BRIEFING = {{BRIEFING_JSON}};
+var MARKET_CONTEXT = {{MARKET_CONTEXT_JSON}};
 var pageView = "briefing";
 var COLORS = {
   "Stage 1": "#64748b",
@@ -273,8 +275,27 @@ function cardHTML(c){
 function briefingRows(cards, reason){
   return cards.map(function(c){return '<div class="brief-row"><button class="symbol-link" type="button" data-symbol="'+esc(c.symbol)+'">'+present(c.symbol)+'</button><span>'+shortText(reason(c))+'</span></div>';}).join('');
 }
+function trendWatch(c){
+  var p=c.ema_analysis;
+  if(!p || p === 'unavailable')return c.stageEvidence || 'Trend conditions not provided';
+  return ['21','50'].map(function(n){var e=p['ema_'+n];return e && e !== 'unavailable' ? 'EMA '+n+': price '+e.position+', average '+e.slope_direction : 'EMA '+n+': unavailable';}).join(' · ');
+}
+function watchRows(cards){
+  return cards.map(function(c){
+    return '<div class="watch-item"><button class="symbol-link" type="button" data-symbol="'+esc(c.symbol)+'">'+present(c.symbol)+'</button> <span class="muted">'+present(c.pullbackStatus)+' · Trend: '+trendLabel(c.riskDial)+'</span>'
+      +'<div class="meta"><b>Confirmation to watch:</b> '+present(c.catalyst || 'No confirmation condition supplied')+'</div>'
+      +'<div class="meta"><b>Invalidation:</b> '+present(c.invalidation)+'</div>'
+      +'<div class="meta"><b>Trend to monitor:</b> '+esc(trendWatch(c))+'</div></div>';
+  }).join('');
+}
+function marketContextHTML(){
+  var m=MARKET_CONTEXT;
+  if(!m || !m.summary)return '';
+  return '<section class="brief-section"><h2>Market context</h2><p class="meta">'+esc(m.summary)+'</p>'+(m.analytical_cutoff?'<p class="muted">As of '+present(m.analytical_cutoff)+'</p>':'')+'</section>';
+}
 function briefingSection(title,cards,reason,empty){
-  return '<section class="brief-section"><h2>'+esc(title)+' <span>'+cards.length+'</span></h2>'+(cards.length?briefingRows(cards.slice(0,5),reason):'<p class="muted">'+esc(empty)+'</p>')+(cards.length>5?'<p class="muted">Showing 5 of '+cards.length+' · browse All tickers for the rest.</p>':'')+'</section>';
+  var watch=title === 'Setups on watch',limit=watch?3:5;
+  return '<section class="brief-section"'+(watch?' style="grid-column:1/-1"':'')+'><h2>'+esc(title)+' <span>'+cards.length+'</span></h2>'+(cards.length?(watch?watchRows(cards.slice(0,limit)):briefingRows(cards.slice(0,limit),reason)):'<p class="muted">'+esc(empty)+'</p>')+(cards.length>limit?'<p class="muted">Showing '+limit+' of '+cards.length+' · browse All tickers for the rest.</p>':'')+'</section>';
 }
 function renderBriefing(){
   var watch=CARDS.filter(function(c){return c.pullbackStatus === 'Healthy pullback' || c.stage === 'Stage 1 → 2';});
@@ -283,7 +304,7 @@ function renderBriefing(){
   var issues=CARDS.filter(function(c){return !!dataException(c);});
   var absent=CARDS.filter(function(c){return !(c.data_quality || {}).status;}).length;
   var previews=CARDS.filter(function(c){return (((c.proposed_extensions || {}).setup_detail || {}).setups || []).some(function(x){return x && x.state === 'triggered';});});
-  document.getElementById('briefing').innerHTML='<div class="brief-intro"><p>A daily snapshot of '+CARDS.length+' tickers. Open a symbol for the full analysis.</p></div>'+'<div class="brief-grid">'
+  document.getElementById('briefing').innerHTML='<div class="brief-intro"><p>A daily snapshot of '+CARDS.length+' tickers. Open a symbol for the full analysis.</p></div>'+marketContextHTML()+'<div class="brief-grid">'
     +briefingSection('Setups on watch',watch,function(c){return c.pullbackStatus+' · '+(c.catalyst || c.stageEvidence || '');},'No healthy pullbacks or Stage 1 → 2 transitions reported.')
     +briefingSection('Worth watching',focus,function(c){return 'Trend: '+trendLabel(c.riskDial)+' · '+(c.stageEvidence || '');},'No favorable trend assessments reported.')
     +briefingSection('Needs review',caution,function(c){return 'Trend: '+trendLabel(c.riskDial)+' · '+(c.pullbackStatus || c.stageEvidence || '');},'No mixed or weak trend assessments reported.')
@@ -354,6 +375,7 @@ setPage('briefing');
 </script>
 </body>
 </html>
+
 
 
 
