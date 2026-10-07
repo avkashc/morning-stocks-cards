@@ -100,6 +100,19 @@
 .measurements{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:12px}.metrics{width:100%;border-collapse:collapse;margin-top:10px;font-size:12px}.metrics caption{text-align:left;color:var(--ink-3);margin-bottom:6px}.metrics th,.metrics td{text-align:left;padding:5px 3px;border-bottom:1px solid var(--line)}.preview summary{color:var(--ink);letter-spacing:.02em}
 [hidden]{display:none!important}.page-tabs{display:flex;gap:8px;margin:18px 0}.page-tabs button{font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:10px 16px;background:var(--surface);color:var(--ink);cursor:pointer}.page-tabs .active{background:var(--head-bg);color:var(--head-ink)}.brief-intro{color:var(--ink-2);font-size:14px;margin-bottom:18px}.brief-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.brief-section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;margin-bottom:16px}.brief-section h2{font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--up);margin-bottom:14px}.brief-section h2 span{color:var(--ink-3);font-size:12px;margin-left:5px}.brief-row{display:flex;align-items:baseline;gap:10px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px;line-height:1.5}.brief-row:last-child{border:0}.brief-row span{flex:1}.symbol-link{font:inherit;font-weight:700;color:var(--up);background:none;border:0;padding:0;cursor:pointer;min-width:60px;text-align:left}.symbol-link:hover{text-decoration:underline}.muted{font-size:12px;color:var(--ink-3);line-height:1.6;margin:8px 0}.compact-scores{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--ink-2);margin:12px 0}.compact-scores b{color:var(--ink);font-size:14px}.compact-summary{margin-bottom:6px;min-height:38px}.compact .card-details{margin-top:12px}.analysis-body{padding-top:16px}.data-exception{color:var(--dn)}button:focus-visible{outline:2px solid #2563eb;outline-offset:3px}@media(max-width:700px){.brief-grid{grid-template-columns:1fr;gap:0}.brief-section{padding:16px}.brief-row{font-size:13px}}
 .watch-item{padding:14px 0;border-bottom:1px solid var(--line)}.watch-item:last-child{border-bottom:0}
+
+  html{scrollbar-gutter:stable}
+  .analysis-open{display:block;width:100%;border:0;border-top:1px solid var(--line);margin-top:12px;padding:12px 0 0;background:none;color:var(--ink-2);text-align:left;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+  .analysis-panel{position:fixed;inset:0 0 0 auto;margin:0;width:min(540px,100%);height:100%;height:100dvh;max-width:100%;max-height:none;padding:0;border:0;border-left:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:-12px 0 36px rgba(0,0,0,.2);overflow:hidden}
+  .analysis-panel[open]{display:flex;flex-direction:column}
+  .analysis-panel::backdrop{background:rgba(0,0,0,.45)}
+  .analysis-header{flex:none;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:1px solid var(--line);padding:20px}
+  .analysis-header h2{font-size:20px;line-height:1.3}
+  .analysis-header .lbl{display:block;margin:4px 0 0}
+  .analysis-close{flex:none;width:44px;height:44px;border:1px solid var(--line);border-radius:8px;background:var(--control-bg);color:var(--ink);font:inherit;font-size:26px;cursor:pointer;line-height:1}
+  .analysis-content{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:20px 20px max(24px,env(safe-area-inset-bottom));overflow-wrap:anywhere}
+  .analysis-content .metrics{font-size:12px}
+  @media(max-width:600px){.analysis-panel{width:100%;border-left:0}.analysis-header,.analysis-content{padding-left:16px;padding-right:16px}}
 </style>
 </head>
 <body>
@@ -125,6 +138,11 @@
 </div>
 <div id="board"></div>
 <footer>{{FOOTER_HTML}}</footer>
+
+<dialog id="analysisPanel" class="analysis-panel" aria-labelledby="analysisTitle">
+  <div class="analysis-header"><div><h2 id="analysisTitle">Full analysis</h2><span id="analysisLabel" class="lbl"></span></div><button id="analysisClose" class="analysis-close" type="button" aria-label="Close full analysis" autofocus>&times;</button></div>
+  <div id="analysisContent" class="analysis-content"></div>
+</dialog>
 <script>
 var CARDS = {{CARDS_JSON}};
 var DAILY_BRIEFING = {{BRIEFING_JSON}};
@@ -263,14 +281,13 @@ function cardHTML(c){
   var ch=typeof c.changePercent === 'number' && Number.isFinite(c.changePercent) ? '<span class="chg '+(c.changePercent>=0?'up':'dn')+'">'+(c.changePercent>0?'+':'')+c.changePercent.toFixed(1)+'%</span>' : '<span class="chg">n/a</span>';
   var quality=(c.data_quality || {}).status;
   var exception=dataException(c);
-  var body=fullCardHTML(c).replace(/^<article[^>]*>/,'').replace(/<\/article>$/,'');
   return '<article class="card compact" style="border-left-color:'+col+'"><div class="row1"><div><span class="sym">'+present(c.symbol)+'</span><span class="lbl">'+present(c.label)+'</span></div><div class="pricewrap"><span class="price">'+present(c.priceDisplay)+'</span>'+ch+'</div></div>'
     +'<div class="statusline"><span class="badge">'+present(c.stage)+'</span><span class="badge">Trend: '+trendLabel(c.riskDial)+'</span></div>'
     +'<div class="compact-scores"><span>Short <b>'+present(c.dailyScore)+'</b></span><span>Intermediate <b>'+present(c.weeklyScore)+'</b></span><span>Long <b>'+present(c.monthlyScore)+'</b></span><small>/10</small></div>'
     +'<p class="ev compact-summary">'+shortText(c.stageEvidence || c.pullbackStatus)+'</p>'
     +emaPositionHTML(c)
     +(exception ? '<div class="meta data-exception">'+esc(exception)+'</div>' : '')
-    +'<details class="card-details"><summary>Open full analysis</summary><div class="analysis-body">'+body+'</div></details></article>';
+    +'<button class="analysis-open" type="button" data-analysis-symbol="'+esc(c.symbol)+'" aria-haspopup="dialog" aria-controls="analysisPanel">Open full analysis &rarr;</button></article>';
 }
 function briefingRows(cards, reason){
   return cards.map(function(c){return '<div class="brief-row"><button class="symbol-link" type="button" data-symbol="'+esc(c.symbol)+'">'+present(c.symbol)+'</button><span>'+shortText(reason(c))+'</span></div>';}).join('');
@@ -321,11 +338,44 @@ function setPage(v){
   document.getElementById('board').hidden=v!=='cards';
   if(v==='briefing')renderBriefing();else render();
 }
+var analysisOpener = null;
+var previousRootOverflow = '';
 function openSymbol(symbol){
-  document.getElementById('q').value=symbol;setPage('cards');
-  var panel=document.getElementById('board').querySelector('.card-details');
-  if(panel){panel.open=true;panel.querySelector('summary').focus();panel.scrollIntoView({block:'nearest',behavior:'smooth'});}
+  var c=CARDS.find(function(card){return card.symbol === symbol;});
+  if(!c)return;
+  var panel=document.getElementById('analysisPanel');
+  document.getElementById('analysisTitle').textContent=c.symbol+' · Full analysis';
+  document.getElementById('analysisLabel').textContent=c.label || '';
+  document.getElementById('analysisContent').innerHTML='<div class="pricewrap" style="text-align:left"><span class="price">'+present(c.priceDisplay)+'</span></div>'
+    +'<div class="statusline"><span class="badge">'+present(c.stage)+'</span><span class="badge">Trend: '+trendLabel(c.riskDial)+'</span></div>'
+    +'<div class="compact-scores"><span>Short <b>'+present(c.dailyScore)+'</b></span><span>Intermediate <b>'+present(c.weeklyScore)+'</b></span><span>Long <b>'+present(c.monthlyScore)+'</b></span><small>/10</small></div>'+fullCardHTML(c);
+  document.getElementById('analysisContent').scrollTop=0;
+  if(!panel.open){
+    analysisOpener=document.activeElement;
+    previousRootOverflow=document.documentElement.style.overflow;
+    panel.showModal();
+    document.documentElement.style.overflow='hidden';
+  }
 }
+function closeAnalysis(){
+  var panel=document.getElementById('analysisPanel');
+  if(panel.open)panel.close();
+}
+document.getElementById('analysisClose').addEventListener('click',closeAnalysis);
+document.getElementById('analysisPanel').addEventListener('click',function(e){
+  if(e.target !== this)return;
+  var r=this.getBoundingClientRect();
+  if(e.clientX<r.left || e.clientX>r.right || e.clientY<r.top || e.clientY>r.bottom)closeAnalysis();
+});
+document.getElementById('analysisPanel').addEventListener('close',function(){
+  document.documentElement.style.overflow=previousRootOverflow;
+  if(analysisOpener && analysisOpener.isConnected)analysisOpener.focus({preventScroll:true});
+  analysisOpener=null;
+});
+document.getElementById('board').addEventListener('click',function(e){
+  var b=e.target.closest('[data-analysis-symbol]');
+  if(b)openSymbol(b.getAttribute('data-analysis-symbol'));
+});
 function setView(v){
   view = v;
   var bs = document.getElementById("btnStage");
