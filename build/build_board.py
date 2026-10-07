@@ -112,7 +112,9 @@ def main():
 
     briefing_json = json.dumps(dataset.get("snapshot_comparison") or dataset.get("daily_briefing") or {}, separators=(",", ":"))
     briefing_json = briefing_json.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
-    html = template.replace("{{CARDS_JSON}}", cards_json).replace("{{BRIEFING_JSON}}", briefing_json)
+    market_json = json.dumps(dataset.get("market_context") or {}, separators=(",", ":"))
+    market_json = market_json.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
+    html = template.replace("{{CARDS_JSON}}", cards_json).replace("{{BRIEFING_JSON}}", briefing_json).replace("{{MARKET_CONTEXT_JSON}}", market_json)
     html = html.replace("{{TITLE_DATE}}", htmlmod.escape(title_date))
     html = html.replace("{{FOOTER_HTML}}", footer)
     html = html.replace("{{ASOF_ET}}", htmlmod.escape(display_time))
@@ -125,6 +127,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
