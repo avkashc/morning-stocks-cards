@@ -236,6 +236,7 @@ function fullCardHTML(c){
     +'<div class="meta"><b>Buy zone:</b> '+present(c.buyZone)+'</div>'
     +'<div class="meta"><b>Invalidation:</b> '+present(c.invalidation)+'</div>'
     +'<div class="meta"><b>Watch:</b> '+present(c.catalyst)+'</div>'
+    +(c.watchFor ? '<div class="meta"><b>Watch for:</b> '+present(c.watchFor)+'</div>' : '')
     +emaDetailHTML(c)+proposedHTML(c)+'</article>';
 }
 function shortText(v){
@@ -285,6 +286,7 @@ function cardHTML(c){
     +'<div class="statusline"><span class="badge">'+present(c.stage)+'</span><span class="badge">Trend: '+trendLabel(c.riskDial)+'</span></div>'
     +'<div class="compact-scores"><span>Short <b>'+present(c.dailyScore)+'</b></span><span>Intermediate <b>'+present(c.weeklyScore)+'</b></span><span>Long <b>'+present(c.monthlyScore)+'</b></span><small>/10</small></div>'
     +'<p class="ev compact-summary">'+shortText(c.stageEvidence || c.pullbackStatus)+'</p>'
+    +(c.watchFor ? '<div class="meta"><b>Watch for:</b> '+esc(c.watchFor)+'</div>' : '')
     +emaPositionHTML(c)
     +(exception ? '<div class="meta data-exception">'+esc(exception)+'</div>' : '')
     +'<button class="analysis-open" type="button" data-analysis-symbol="'+esc(c.symbol)+'" aria-haspopup="dialog" aria-controls="analysisPanel">Open full analysis &rarr;</button></article>';

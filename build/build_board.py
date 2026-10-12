@@ -14,6 +14,7 @@ If template.html is omitted, uses board_template.html alongside this script.
 import json, sys, os, html as htmlmod
 from datetime import datetime
 from zoneinfo import ZoneInfo
+from watch_for import build_watch_for
 
 
 def format_price(card):
@@ -62,6 +63,7 @@ def build_cards(cards):
             card["pullbackStatus"] = (c.get("pullback_detail") or {}).get("status")
         if "risk_detail" in c:
             card["riskDial"] = (c.get("risk_detail") or {}).get("dial")
+        card["watchFor"] = build_watch_for(card)
         if c.get("priceUnit"):
             card["priceUnit"] = c["priceUnit"]
         if c.get("dataNote"):
